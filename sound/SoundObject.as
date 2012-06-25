@@ -92,19 +92,27 @@ Faders
 					
 					_som = new Sound();
 					_som.load(new URLRequest(_url), _buffer);
-	
-					if(_loop){
-						resetChannel(_som.play(0, 9999));
+					
+					if (_autoplay) {
+						if (_loop) {
+							resetChannel(_som.play(0, 9999));
+						}else {
+							resetChannel(_som.play());
+						}
+						_transf.volume = _volume;
+						_canal.soundTransform = _transf;
+						
+						_playing = true;
+						
+						dispatchEvent(new SoundEvent(SoundEvent.PLAY_CHANGED));
 					}else {
 						resetChannel(_som.play());
+						_transf.volume = _volume;
+						_canal.soundTransform = _transf;
+						_playing = true;
+						togglePause();
 					}
-	
-					_transf.volume = _volume;
-					_canal.soundTransform = _transf;
-					
-					_playing = true;
-					
-					dispatchEvent(new SoundEvent(SoundEvent.PLAY_CHANGED));
+		
 
 					_som.addEventListener(ProgressEvent.PROGRESS, onProgress, false, 0, true);
 					_som.addEventListener(Event.OPEN, onOpen, false, 0, true);

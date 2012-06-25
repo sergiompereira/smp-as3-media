@@ -12,7 +12,7 @@
 	import flash.utils.Timer;
 	import flash.events.TimerEvent;
 	
-	import com.smp.common.display.utils.MovieClipUtilities;
+	import com.smp.common.display.MovieClipUtilities;
 	
 
 	internal class  PlayheadSlider extends SoundInterfaceComponent
