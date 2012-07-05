@@ -54,6 +54,7 @@
 			_autoplay = autoplay;
 			
 			model = new SoundModel();
+			model.addEventListener(SoundEvent.PLAY_CHANGED, onPlayChanged);
 			model.setMediaList(files);
 			
 			model.activeSound = soundCollection[0];
@@ -182,6 +183,13 @@
 		
 		public function previous():void {
 			this.play(model.previous());
+		}
+		
+		public function get playing():Boolean {
+			return model.activeSound.playing;
+		}
+		private function onPlayChanged(evt:SoundEvent):void {
+			dispatchEvent(new SoundEvent(SoundEvent.PLAY_CHANGED));
 		}
 		
 	}

@@ -70,7 +70,9 @@
 		}
 		
 		public function set activeSound(sound:ISoundOutput):void {
+			if(_soundObject) _soundObject.removeEventListener(SoundEvent.PLAY_CHANGED, onPlayChanged);
 			_soundObject = sound;
+			_soundObject.addEventListener(SoundEvent.PLAY_CHANGED, onPlayChanged);
 			dispatchEvent(new Event(SOUND_CHANGED));
 		}
 		
@@ -93,6 +95,10 @@
 				_activeId = _soundList.length - 1;
 			}
 			return _activeId;
+		}
+		
+		private function onPlayChanged(evt:SoundEvent):void {
+			dispatchEvent(new SoundEvent(SoundEvent.PLAY_CHANGED));
 		}
 	}
 }
