@@ -48,16 +48,13 @@
 		}
 		private function connectionOnStatus(evt:NetStatusEvent):void {
 			//private function connectionOnStatus():void {
-			trace("status");
-
 			if (evt.info.code == "NetConnection.Connect.Success") {
-				trace("dopo status");
 				createStream();
 
 			}
 		}
 		private function createStream() {
-			
+			trace('createStream')
 			_streamer=new NetStream(_conn);
 			_streamerInfo=new Object  ;
 			_streamerInfo.onMetaData=OnMetaData;
@@ -100,6 +97,7 @@
 		}
 		
 		private function OnMetaData(obj:Object) {
+			trace('on meta data')
 			_totalLength = obj.duration;
 		
 		}
@@ -113,9 +111,11 @@
 				
 					if (!_playing) {
 						stop();
+					}else {
+						dispatchEvent(new VideoEvent(VideoEvent.START));
 					}
 					
-					dispatchEvent(new VideoEvent(VideoEvent.START));
+					
 					
 				
 			}
@@ -133,7 +133,6 @@
 		
 		private function onTimerInfo(evt:TimerEvent):void {
 			//trace(_video.videoHeight + " // " + _video.videoWidth)
-			
 			
 			
 			//Avalia quando já existem dados para fazer um rescale do vídeo
@@ -211,7 +210,6 @@
 		
 		public function get length():Number 
 		{
-			
 			if(isNaN(_totalLength)) {
 				return streamer.time;
 			}
@@ -311,7 +309,10 @@
 			if (_playing) {
 				togglePause();
 			}
-			_streamer.seek(0);
+			if (!isNaN(_totalLength)) {
+				_streamer.seek(0);
+			}
+			
 			_streamer.pause();
 			
 			dispatchEvent(new VideoEvent(VideoEvent.PLAY_CHANGED));
