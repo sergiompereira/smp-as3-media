@@ -43,7 +43,6 @@
 		private var _loop:Boolean;
 		private var _autoplay:Boolean;
 		
-		private var _activeId:int;
 		private var _screen:DisplayObjectContainer;
 		
 		private var playbackWidth:Number = 0;
@@ -51,27 +50,29 @@
 		
 		public function VideoPlayer(files:Array, loop:Boolean  = false, autoplay:Boolean = false) {
 			
+			_loop = loop;
+			_autoplay = autoplay;
+			
 			videoCollection = new Array();
 			for (var i:uint = 0; i < files.length; i++) {
-				var videoObject:IVideoOutput = new VideoObject();	
+				var videoObject:IVideoOutput = new VideoObject(files[i], _loop, _autoplay, true);	
 				videoObject.addEventListener(VideoEvent.END, onVideoComplete);
 				videoCollection.push(videoObject);
 			}
-			
-			_loop = loop;
-			_autoplay = autoplay;
 
 			invoker = new Invoker();
 			
 			model = new VideoModel();
+			model.addEventListener(VideoEvent.PLAY_CHANGED, onPlayChanged);
 			model.setMediaList(files);
 			
 			model.activeVideo = videoCollection[0];
-			_activeId = 0;
-			if (files.length > 0) {
-				(videoCollection[0] as IVideoOutput).load(model.getMediaFile(0), false, _autoplay, true);
-			}else {
+		
+			if (!files.length) {
 				throw new Error("VideoPlayer->init: files array must not be empty.");
+			}
+			if (_autoplay) {
+				(videoCollection[0] as IVideoOutput).load(model.getMediaFile(0));
 			}
 		}
 	
@@ -93,23 +94,22 @@
 			
 			if (model.activeVideo != (videoCollection[item] as IVideoOutput)) {
 				
-				if((videoCollection[_activeId] as IVideoOutput).playing){
-				(videoCollection[_activeId] as IVideoOutput).stop();
+				if((videoCollection[model.activeId] as IVideoOutput).playing){
+					(videoCollection[model.activeId] as IVideoOutput).stop();
 				}
 				
 				model.activeVideo = (videoCollection[item] as IVideoOutput);
 				
 				if(!(videoCollection[item] as IVideoOutput).loaded){
-					(videoCollection[item] as IVideoOutput).load(model.getMediaFile(item), _loop, _autoplay, true);
+					(videoCollection[item] as IVideoOutput).load(model.getMediaFile(item));
 				}else {
 					(videoCollection[item] as IVideoOutput).init();
 				}
 				(videoCollection[item] as IVideoOutput).volume = model.getVolume();
 				
-				_screen.removeChild(videoCollection[_activeId]);
+				_screen.removeChild(videoCollection[model.activeId]);
 				_screen.addChild(videoCollection[item]);
 				
-				_activeId = model.activeId;
 			}
 		
 		}
@@ -203,7 +203,7 @@
 			}
 		}
 		
-		public function Init():void {
+		public function init():void {
 			(videoCollection[model.activeId] as IVideoOutput).init();
 		}
 		
@@ -219,6 +219,11 @@
 		public function previous():void {
 			this.play(model.previous());
 		}
-		
+		public function get playing():Boolean {
+			return model.activeVideo.playing;
+		}
+		private function onPlayChanged(evt:VideoEvent):void {
+			dispatchEvent(new VideoEvent(VideoEvent.PLAY_CHANGED));
+		}
 	}
 }

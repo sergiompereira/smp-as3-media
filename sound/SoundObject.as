@@ -14,6 +14,7 @@ Controlos:stop,init,play/pause,playback position,volume
 Faders
 */
 
+	import com.smp.common.utils.JSUtils;
 	import flash.media.Sound;
 	import flash.media.SoundChannel;
 	import flash.media.SoundLoaderContext;
@@ -43,9 +44,9 @@ Faders
 		private var _canal:SoundChannel;
 		private var _transf:SoundTransform = new SoundTransform();
 
-		private var _position:int;
+		private var _position:int = 0;
 		private var _volume:Number;
-		private var _playing:Boolean;
+		private var _playing:Boolean = false;
 		
 
 
@@ -58,31 +59,31 @@ Faders
 			_volume = 1;
 			
 			_playing = false;
-
 			_verbose = verbose;
 
 			_faderTimer = new Timer(500);
-
-			if (_url != "") {
-				try {
-					this.load(_url);
-				} catch (err:Error) {
-					trace("SoundObject->init: "+err.message);
-				}
+			
+			if (_autoplay && _url != '') {
+				this.load(_url);
 			}
+
 		}
 		public function set buffer(buffer:Number):void 
 		{
 			_buffer = new SoundLoaderContext(buffer);
 		}
 		
-		public function load(url:String):void {
+		public function load(url:String = ''):void {
 			
-			
-
 			if (_som == null) {
 				
-				_url = url;
+				if (url != '') {
+					_url = url;
+				}else if (_url == '') {
+					throw new ArgumentError("SoundObject->load: Não foi fornecido nenhum ficheiro de som.");
+					return;
+				}
+				
 				_loaded = false;
 				_loadedPercent=0;
 				_bytesLoaded=0;
@@ -93,7 +94,7 @@ Faders
 					_som = new Sound();
 					_som.load(new URLRequest(_url), _buffer);
 					
-					if (_autoplay) {
+					//if (_autoplay) {
 						if (_loop) {
 							resetChannel(_som.play(0, 9999));
 						}else {
@@ -105,13 +106,13 @@ Faders
 						_playing = true;
 						
 						dispatchEvent(new SoundEvent(SoundEvent.PLAY_CHANGED));
-					}else {
+					/*}else {
 						resetChannel(_som.play());
 						_transf.volume = _volume;
 						_canal.soundTransform = _transf;
 						_playing = true;
 						togglePause();
-					}
+					}*/
 		
 
 					_som.addEventListener(ProgressEvent.PROGRESS, onProgress, false, 0, true);
@@ -120,15 +121,17 @@ Faders
 					_som.addEventListener(IOErrorEvent.IO_ERROR, onIOError, false, 0, true);
 
 				} catch (err:Error) {
-					trace("SoundObject->Load: "+err.message);
+					if (_verbose) {
+						throw new Error("SoundObject->load: " + err.message);
+					}
 				}
 			} else {
-				trace("SoundObject->Load: Só pode ser carregado um único ficheiro.");
+				throw new ArgumentError("SoundObject->load: Só pode ser carregado um único ficheiro.");
 			}
 		}
 		private function onIOError(evt:IOErrorEvent):void {
 			if (_verbose) {
-				trace("Erro de loading: "+evt.text);
+				throw IOErrorEvent;
 			}
 		}
 		private function onOpen(evt:Event):void {
@@ -137,7 +140,8 @@ Faders
 			}
 		}
 		private function onProgress(evt:ProgressEvent):void {
-			dispatchEvent(new Event("onProgress"));
+			
+			dispatchEvent(evt);
 
 			_loadedPercent=Math.round(_som.bytesLoaded / _som.bytesTotal * 100);
 			_bytesLoaded=_som.bytesLoaded;
@@ -153,14 +157,14 @@ Faders
 			_som.removeEventListener(ProgressEvent.PROGRESS, onProgress);
 			_som.removeEventListener(Event.COMPLETE, onComplete);
 
-			dispatchEvent(new Event(Event.COMPLETE));
+			dispatchEvent(evt);
 			
-			if (!_autoplay) {
+			/*if (!_autoplay) {
 				_playing = false;
 				_position = 0;
 				_canal.stop();
 				dispatchEvent(new SoundEvent(SoundEvent.PLAY_CHANGED));
-			}
+			}*/
 
 		}
 		public function get loadedPercent():int {
@@ -203,24 +207,44 @@ Faders
 		}
 		public function init():void 
 		{
-			_playing = true;
-			_position = _canal.position;
+			if (_som == null) {
+				if(_url != '') {
+					load(_url);
+				}else {
+					throw new ArgumentError("SoundObject -> togglePause: Não foi fornecido nenhum ficheiro de som.");
+				}
 			
-			if(_loop){
-				resetChannel(_som.play(0, 9999));
 			}else {
-				resetChannel(_som.play());
+				_playing = true;
+				_position = _canal.position;
+				
+				if(_loop){
+					resetChannel(_som.play(0, 9999));
+				}else {
+					resetChannel(_som.play());
+				}
+				
+				dispatchEvent(new SoundEvent(SoundEvent.PLAY_CHANGED));
 			}
 			
-			dispatchEvent(new SoundEvent(SoundEvent.PLAY_CHANGED));
 		}
 		
 		public function togglePause():void {
 			
-			if (_playing == true) {
+			if (_som == null) {
+				if(_url != '') {
+					load(_url);
+				}else {
+					throw new ArgumentError("SoundObject -> togglePause: Não foi fornecido nenhum ficheiro de som.");
+				}
+			
+			}else if (_playing == true) {
 				_position = _canal.position;
 				_canal.stop();
-
+				
+				_playing = false;
+				dispatchEvent(new SoundEvent(SoundEvent.PLAY_CHANGED));
+			
 			} else {
 				
 				if(_loop){
@@ -230,11 +254,13 @@ Faders
 				}
 				
 				this.volume = _volume;
+				
+				_playing = true;
+				dispatchEvent(new SoundEvent(SoundEvent.PLAY_CHANGED));
 			}
-			_playing = !_playing;
-			
-			dispatchEvent(new SoundEvent(SoundEvent.PLAY_CHANGED));
+
 		}
+
 		public function set time(value:int):void 
 		{	
 			_canal.stop();
@@ -282,20 +308,28 @@ Faders
 		
 		public function fadeIn(tempo:Number):void 
 		{
-			_position = _canal.position;
-			_canal.stop();
-					
-			if (!_playing) {
-				togglePause();
-			}
-			
-			resetFader();
-			_transf.volume = 0;
-			_canal.soundTransform = _transf;
+			if (_som == null) {
+				if(_url != '') {
+					load(_url);
+				}else {
+					throw new ArgumentError("SoundObject -> togglePause: Não foi fornecido nenhum ficheiro de som.");
+				}
+			}else{
+				_position = _canal.position;
+				_canal.stop();
+				
+				if (!_playing) {
+					togglePause();
+				}
+				
+				resetFader();
+				_transf.volume = 0;
+				_canal.soundTransform = _transf;
 
-			_faderTimer.delay = tempo*100;
-			_faderTimer.addEventListener(TimerEvent.TIMER, volumeIn, false, 0, true);
-			_faderTimer.start();
+				_faderTimer.delay = tempo*100;
+				_faderTimer.addEventListener(TimerEvent.TIMER, volumeIn, false, 0, true);
+				_faderTimer.start();
+			}
 
 		}
 		

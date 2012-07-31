@@ -66,8 +66,10 @@
 			return _activeId;
 		}
 		
-		public function set activeVideo(sound:IVideoOutput):void {
-			_videoObject = sound;
+		public function set activeVideo(video:IVideoOutput):void {
+			if (_videoObject) _videoObject.removeEventListener(VideoEvent.PLAY_CHANGED, onPlayChanged);
+			_videoObject = video;
+			_videoObject.addEventListener(VideoEvent.PLAY_CHANGED, onPlayChanged);			
 			dispatchEvent(new Event(VideoEvent.VIDEO_CHANGED));
 		}
 		
@@ -90,6 +92,9 @@
 				_activeId = _videoList.length - 1;
 			}
 			return _activeId;
+		}
+		private function onPlayChanged(evt:VideoEvent):void {
+			dispatchEvent(new VideoEvent(VideoEvent.PLAY_CHANGED));
 		}
 	}
 }

@@ -11,7 +11,9 @@
 
 	public class VideoObject extends Sprite implements IVideoOutput{
 
-		private var _verbose:Boolean;
+		private var _initialized:Boolean = false;
+		private var _autoplay:Boolean = false;
+		private var _verbose:Boolean = false;
 		private var _conn:NetConnection;
 		private var _streamer:NetStream;
 		private var _video:Video;
@@ -26,7 +28,7 @@
 		private var _file:String;
 		private var _transf:SoundTransform = new SoundTransform();
 		private var _volume:Number;
-		private var _playing:Boolean = true;
+		private var _playing:Boolean = false;
 		private var _loop:Boolean = false;
 		
 		private var _rescalable:Boolean = false;
@@ -36,25 +38,31 @@
 		private var _centerVideo:Array = new Array(2);
 		
 
-		public function VideoObject() {
+		public function VideoObject(file:String = "", loop:Boolean = false, autoplay:Boolean = true, verbose:Boolean = true) {
+			
+			
+			_file = file;
+			_loop = loop;
+			_autoplay = autoplay;
+			_verbose = verbose;
+			_rescalable = false;
+			
 			//create vídeo
 			_conn=new NetConnection  ;
-			//_conn.connect("http://80.172.230.70:8080/");
 			_conn.connect(null);
 
 			createStream();
-			//_conn.addEventListener(NetStatusEvent.NET_STATUS, connectionOnStatus);
 
 		}
-		private function connectionOnStatus(evt:NetStatusEvent):void {
+		/*private function connectionOnStatus(evt:NetStatusEvent):void {
 			//private function connectionOnStatus():void {
 			if (evt.info.code == "NetConnection.Connect.Success") {
 				createStream();
 
 			}
-		}
+		}*/
 		private function createStream() {
-			trace('createStream')
+			//trace('createStream')
 			_streamer=new NetStream(_conn);
 			_streamerInfo=new Object  ;
 			_streamerInfo.onMetaData=OnMetaData;
@@ -76,22 +84,29 @@
 			_timer.addEventListener(TimerEvent.TIMER, onProgress, false, 0, true);
 			
 			//dispatchEvent(new Event("StreamReady"));
-		}
-		public function load(file:String, loop:Boolean = false, autoplay:Boolean = true, verbose:Boolean = true):void {
 			
-			_file = file;
-			_loop = loop;
-			_playing = autoplay;
-			_verbose = verbose;
-			_rescalable = false;
+			if (_autoplay && _file != '') {
+				this.load(_file);
+			}
+		}
+		public function load(file:String = ""):void {
+			
+			if (file != '') {
+				_file = file;
+			}else if (_file == '') {
+				throw new ArgumentError("VideoObject->load: Não foi fornecido nenhum ficheiro de video.");
+				return;
+			}
 			
 			_streamer.seek(0);
-			_streamer.play(file);
+			_streamer.play(_file);
 
+			_playing = true;
 			
 			_timer.start();
 			_timerInfo.start();
 			
+			_initialized = true;
 			dispatchEvent(new VideoEvent(VideoEvent.PLAY_CHANGED));
 
 		}
@@ -294,12 +309,19 @@
 			}
 		}
 		
-		public function init():void{
-			_streamer.seek(0);
-			_streamer.play(_file);
-			_playing = true;
+		public function init():void {
+			if (_initialized || _file != '') {
+				
+				_streamer.seek(0);
+				_streamer.play(_file);
+				_playing = true;
+				
+				dispatchEvent(new VideoEvent(VideoEvent.PLAY_CHANGED));
+			}else{
+				throw new ArgumentError("VideoObject->load: Não foi fornecido nenhum ficheiro de video.");
+				return;
+			}
 			
-			dispatchEvent(new VideoEvent(VideoEvent.PLAY_CHANGED));
 		}
 		
 		public function stop():void 
@@ -324,10 +346,17 @@
 		}
 		
 		public function togglePause():void {
-			_streamer.togglePause();
-			_playing = !_playing;
-			
-			dispatchEvent(new VideoEvent(VideoEvent.PLAY_CHANGED));
+			if (_initialized) {
+				_streamer.togglePause();
+				_playing = !_playing;
+				dispatchEvent(new VideoEvent(VideoEvent.PLAY_CHANGED));
+			}else if (_file != '') {
+				load();
+			}else {
+				throw new ArgumentError("VideoObject->load: Não foi fornecido nenhum ficheiro de video.");
+				return;
+			}
+		
 		}
 		
 		public function get playing():Boolean{

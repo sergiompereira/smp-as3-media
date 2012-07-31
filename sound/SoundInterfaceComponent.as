@@ -23,7 +23,7 @@
 		public function init(model:SoundModel = null) {
 			if(model!=null){
 				_model = model;
-				_model.addEventListener(SoundModel.SOUND_CHANGED, onSoundChanged);
+				_model.addEventListener(SoundEvent.SOUND_CHANGED, onSoundChanged);
 				_soundOutput = _model.activeSound;
 			}
 			

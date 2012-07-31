@@ -12,7 +12,7 @@
 		
 		public function VolumeCommand(model:SoundModel) {
 			_model = model;
-			_model.addEventListener(SoundModel.SOUND_CHANGED, onSoundChanged);
+			_model.addEventListener(SoundEvent.SOUND_CHANGED, onSoundChanged);
 			_receiver = _model.activeSound;
 			
 		}

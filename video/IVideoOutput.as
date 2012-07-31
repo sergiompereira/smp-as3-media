@@ -6,7 +6,7 @@
 	
 	public interface  IVideoOutput extends IEventDispatcher
 	{
-		function load(file:String, loop:Boolean = false, autoplay:Boolean = true, verbose:Boolean = true):void;
+		function load(file:String = ""):void;
 		//function get streamer():NetStream;
 		//function get video():Video;
 		function get loadPercent():int;

@@ -44,7 +44,7 @@
 				
 			soundCollection = new Array();
 			for (var i:uint = 0; i < files.length; i++) {
-				var soundObject:ISoundOutput = new SoundObject("", false, autoplay);	
+				var soundObject:ISoundOutput = new SoundObject(files[i], false, autoplay);	
 				soundObject.addEventListener(Event.SOUND_COMPLETE, onSoundComplete);
 				soundCollection.push(soundObject);
 			}
@@ -58,12 +58,13 @@
 			model.setMediaList(files);
 			
 			model.activeSound = soundCollection[0];
-			if (files.length > 0) {
-				soundCollection[0].load(model.getMediaFile(0));
-			}else {
+			if (!files.length) {
 				throw new Error("SoundPlayer->init: files array must be not empty.");
 			}
-			
+			if (_autoplay) {
+				soundCollection[0].load(model.getMediaFile(0));
+			}
+			 
 			
 		}
 		

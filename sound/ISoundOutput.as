@@ -4,7 +4,7 @@
 	
 	public interface  ISoundOutput extends IEventDispatcher
 	{
-		function load(url:String):void;
+		function load(url:String = ''):void;
 		function get loaded():Boolean;
 		function get playing():Boolean;
 		function fadeIn(tempo:Number):void 

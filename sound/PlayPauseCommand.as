@@ -13,7 +13,7 @@
 		
 		public function PlayPauseCommand(model:SoundModel, fader:Boolean = false) {
 			_model = model;
-			_model.addEventListener(SoundModel.SOUND_CHANGED, onSoundChanged);
+			_model.addEventListener(SoundEvent.SOUND_CHANGED, onSoundChanged);
 			_receiver = _model.activeSound;
 			_fader = fader;
 		}

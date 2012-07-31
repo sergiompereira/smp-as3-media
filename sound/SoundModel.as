@@ -10,7 +10,6 @@
 		
 		public static const VOLUME_CHANGED:String = "VolumeChanged";
 		public static const TIME_CHANGED:String = "TimeChanged";
-		public static const SOUND_CHANGED:String = "SoundChanged";
 		
 		protected var _volume:Number;
 		protected var _time:Number;
@@ -73,7 +72,7 @@
 			if(_soundObject) _soundObject.removeEventListener(SoundEvent.PLAY_CHANGED, onPlayChanged);
 			_soundObject = sound;
 			_soundObject.addEventListener(SoundEvent.PLAY_CHANGED, onPlayChanged);
-			dispatchEvent(new Event(SOUND_CHANGED));
+			dispatchEvent(new SoundEvent(SoundEvent.SOUND_CHANGED));
 		}
 		
 		public function get activeSound():ISoundOutput {
