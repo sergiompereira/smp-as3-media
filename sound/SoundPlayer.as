@@ -170,7 +170,11 @@
 			if (_autoplay) {
 				if((model.activeId == model.getListLength()-1 && _loop == true) || model.activeId < model.getListLength()-1){
 					this.play(model.next());
+				}else {
+					(soundCollection[model.activeId] as ISoundOutput).time = 0;
 				}
+			}else {
+				(soundCollection[model.activeId] as ISoundOutput).time = 0;
 			}
 		}
 		
